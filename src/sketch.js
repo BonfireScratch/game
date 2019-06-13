@@ -1,11 +1,9 @@
 let CANVAS_HEIGHT = 540;
 let CANVAS_WIDTH = 720;
-let level, levelBack, planet, player, canvas, deltaTime;
-var dead, timeBetweenSpawns, timer, enemies, timeSinceStart;
+let level, levelBack, planet, player, canvas, deltaTime, dead, timeBetweenSpawns, timer, enemies, timeSinceStart;
 
 function setup() {
     canvas = createCanvas(CANVAS_WIDTH, CANVAS_HEIGHT);
-
     level = new Circle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 100, false, 'black', 20);
     levelBack = new Circle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 90, false, 'gray', 15);
     planet = new Circle(CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2, 40, 'black', 'gray', 5);
@@ -19,15 +17,16 @@ function setup() {
 
 function draw() {
     background(255);
-    deltaTime = window.performance.now() - canvas._pInst._lastFrameTime;
     
     if (!dead) {
+        deltaTime = window.performance.now() - canvas._pInst._lastFrameTime;
         timer += deltaTime;
         timeSinceStart += deltaTime;
 
         if (timer > timeBetweenSpawns) {
             spawnEnemy();
             timer = 0;
+
             if (timeBetweenSpawns >= 400) {
                 timeBetweenSpawns -= 2;
             }
@@ -37,6 +36,8 @@ function draw() {
         drawPlayer();
         drawEnemies();
         drawText();
+    } else {
+        setup();
     }
 }
 
@@ -50,10 +51,12 @@ function drawEnemies() {
     for (var i = 0; i < enemies.length; i++) {
         enemy = enemies[i];
 
-        if (intersect(player, enemy)) {
-            enemies.splice(i, i + 1);
-        } else {
-            enemy.update();
+        if (enemy != undefined) {
+            if (intersect(player, enemy)) {
+                enemies[i] = undefined;
+            } else {
+                enemy.update();
+            }
         }
     }
 }
@@ -75,12 +78,15 @@ function intersect(circle, rectangle) {
 }
 
 function drawPlayer() {
-    let v1 = createVector(mouseX - level.x, mouseY - level.y);
-    v1.normalize();
-    vec = v1.mult(level.radius);
-    translate(level.x, level.y);
-    player.x = vec.x;
-    player.y = vec.y;
+    if (mouseX != 0 && mouseY != 0) {
+        let v1 = createVector(mouseX - level.x, mouseY - level.y);
+        v1.normalize();
+        vec = v1.mult(level.radius);
+        translate(level.x, level.y);
+        player.x = vec.x;
+        player.y = vec.y;
+    }
+
     player.update();
 }
 
@@ -115,6 +121,13 @@ function Enemy(x, y, sideLength, fillColor, strokeColor, strokeWeigh) {
 
         this.x += dist.x * (3000 - timeBetweenSpawns) / 1000;
         this.y += dist.y * (3000 - timeBetweenSpawns) / 1000;
+
+        this.x = Math.round(this.x);
+        this.y = Math.round(this.y);
+
+        if ((this.x + CANVAS_WIDTH / 2) == planet.x) {
+            dead = true;
+        }
 
         this.draw();
     };
